@@ -1,4 +1,5 @@
 # conda_jupyter
+
 `ana/prog`ディレクトリは`.gitignore`に記載されておりますが、そこにデータが溜まっていきます。
 
 `docker-compose up`または`docker-compose up -d`で起動してください。
