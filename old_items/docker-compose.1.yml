@@ -1,0 +1,73 @@
+version: "3"
+services:
+    mysql:
+        env_file: .env
+        build: ./db
+        image: ${image_name_mysql}
+        container_name: ${container_name_mysql}
+        environment:
+            MYSQL_DATABASE: ${DB_NAME}
+            MYSQL_ROOT_PASSWORD: ${ROOT_PASS}
+            MYSQL_USER: ${USER_NAME}
+            MYSQL_PASSWORD: ${USER_PASS}
+            TZ: "Asia/Tokyo" 
+        ports:
+            - "${port_of_mysql}"
+        networks:
+            aplication_net:
+                ipv4_address: 172.19.0.2
+
+    flask:
+        env_file: .env
+        container_name: ${container_name_flask}
+        build: ./flask_app
+        image: ${image_name_flask}
+        volumes:
+            - ./flask_app/config/:${container_mountpoint_uwsgi}
+            - ./flask_app/www/:${container_mountpoint_www}
+            - ./flask_app/shell/:${container_mountpoint_shell}
+        ports:
+            - "${port_of_flask}"
+        environment:
+            UWSGI_DIR: ${container_mountpoint_www}
+            MYSQL_CTR_NAME: ${container_name_mysql}
+            MAIL_USERNAME: ${mail_username}
+            MAIL_PASSWORD: ${mail_password}
+            DEFAULT_MAIL_SENDER: ${default_mail_sender}
+            FLASK_APP: ${flask_managepy}
+            FLASK_CONFIG_STATUS: "dev"
+            TZ: "Asia/Tokyo"
+        stdin_open: true
+        tty: true 
+        command: sh ${container_mountpoint_shell}command.sh
+        networks:
+            aplication_net:
+                ipv4_address: 172.19.0.3
+
+    nginx:
+        env_file: .env
+        container_name: ${container_name_nginx}
+        build: ./nginx
+        image: ${image_name_nginx}
+        volumes:
+            - ./nginx/publich:/hostos/publich/
+            - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
+            - ./nginx/config/flask_app.conf:/etc/nginx/conf.d/flask_app.conf
+        ports:
+            - "${port_of_nginx}"
+        environment:
+            TZ: "Asia/Tokyo"
+        stdin_open: true
+        tty: true
+        networks:
+            aplication_net:
+                ipv4_address: 172.19.0.4
+
+networks:
+    aplication_net: 
+        driver: bridge
+        ipam:
+            driver: default 
+            config: 
+            - subnet: 172.19.0.0/24
+        
